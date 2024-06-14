@@ -5,8 +5,23 @@ const resultsModal = new bootstrap.Modal(document.getElementById("resultsModal")
 document.getElementById("status").addEventListener("click", e => getStatus(e));
 document.getElementById("submit").addEventListener("click", e => postForm(e));
 
+function processOptions(form) {
+    let optArray = [];
+
+    for (let entry of form.entries()) {
+        if (entry[0] === "options") {
+            optArray.push(entry[1]);
+        }
+    }
+    form.delete("options");
+
+    form.append("options", optArray.join());
+
+    return form;
+}
+
 async function postForm(e) {
-    const form = new FormData(document.getElementById("checksform"));
+    const form = processOptions(new FormData(document.getElementById("checksform")));
     
     const response = await fetch(API_URL, {
                                 method: "POST",
@@ -21,8 +36,20 @@ async function postForm(e) {
     if (response.ok) {
         displayErrors(data);
     } else {
+        displayExeption(data);
         throw new Error(data.error);
     }
+}
+
+function displayExeption(data) {
+    heading = "An Exeption Occured";
+    let error = `<div>The API returned status code ${data.status_code}</div>`;
+    error += `<div>Error number: <strong>${data.error_no}</strong></div>`;
+    error += `<div>Error text: <strong>${data.error}</strong></div>`;
+
+    document.getElementById('resultsModalTitle').textContent = heading;
+    document.getElementById('results-content').innerHTML = error;
+    resultsModal.show();
 }
 
 function displayErrors(data) {
@@ -54,6 +81,7 @@ async function getStatus(e) {
     if (response.ok) {
         displayStatus(data);
     } else {
+        displayExeption(data);
         throw new Error(data.error);
     }
 };
